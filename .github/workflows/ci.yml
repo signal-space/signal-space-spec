@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: signal-space-spec
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install jsonschema
+      - run: make check
+        working-directory: signal-space-spec
+
+  binding-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: signal-space-spec
+      - uses: actions/checkout@v4
+        with:
+          repository: signal-space/signal-space-rs
+          path: signal-space-rs
+      - uses: actions/checkout@v4
+        with:
+          repository: signal-space/signal-space-js
+          path: signal-space-js
+      - uses: actions/checkout@v4
+        with:
+          repository: signal-space/signal-space-py
+          path: signal-space-py
+      - uses: actions/checkout@v4
+        with:
+          repository: signal-space/signal-space-zig
+          path: signal-space-zig
+      - uses: actions/checkout@v4
+        with:
+          repository: signal-space/signal-space-kt
+          path: signal-space-kt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: make check-local-bindings
+        working-directory: signal-space-spec
