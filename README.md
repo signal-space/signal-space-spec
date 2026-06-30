@@ -12,6 +12,7 @@ owning the source runtime or mutation authority.
 - `fixtures/` contains stable graph examples used by every implementation.
 - `conformance/` defines fixture naming, version support, and validation rules.
 - `docs/authority-boundaries.md` documents advisory and gated intent handling.
+- `docs/binding-contract.md` defines the multi-language implementation contract.
 
 ## Dependency Direction
 
@@ -43,3 +44,10 @@ make check
 The check validates every required fixture against
 `schemas/signal-space.schema.json` and enforces the initial cross-fixture
 invariants from `conformance/manifest.json`.
+
+When the sibling implementation repositories are checked out beside the spec,
+validate their version and lazily dependency metadata with:
+
+```bash
+make check-local-bindings
+```
