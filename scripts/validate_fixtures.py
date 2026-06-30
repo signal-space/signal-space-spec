@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 import sys
@@ -91,7 +92,50 @@ def grants_direct(node: dict[str, Any], decision: dict[str, Any], intent: dict[s
 
 
 def validate_invalid_cases(validator: Any) -> None:
-    document = json.loads(FIXTURES[0].read_text(encoding="utf-8"))
+    base_document = json.loads(FIXTURES[0].read_text(encoding="utf-8"))
+
+    document = deepcopy(base_document)
+    document["graph"]["nodes"][0]["id"] = "invalid id with spaces"
+    assert_schema_invalid(
+        "invalid_node_id",
+        validator,
+        document,
+    )
+
+    document = deepcopy(base_document)
+    document["graph"]["nodes"][0]["state"]["fields"][0]["derived"] = True
+    document["graph"]["nodes"][0]["state"]["fields"][0]["writable"] = True
+    assert_invalid(
+        "derived_field_writable",
+        validator,
+        document,
+        "derived field is writable",
+    )
+
+    document = deepcopy(base_document)
+    document["graph"]["edges"][0]["from"] = "missing.node"
+    assert_invalid(
+        "unknown_edge_endpoint",
+        validator,
+        document,
+        "unknown endpoint",
+    )
+
+    document = json.loads(FIXTURES[1].read_text(encoding="utf-8"))
+    node = first_trainable_node(document)
+    node["decision"]["capabilities"] = [
+        capability
+        for capability in node["decision"]["capabilities"]
+        if capability != "trainable_model.lifecycle"
+    ]
+    assert_invalid(
+        "trainable_lifecycle_without_capability",
+        validator,
+        document,
+        "trainable lifecycle without decision capability",
+    )
+
+    document = deepcopy(base_document)
     intent = first_proposed_intent(document)
     intent["authority"] = "direct"
     assert_invalid(
@@ -109,6 +153,26 @@ def first_proposed_intent(document: dict[str, Any]) -> dict[str, Any]:
         if proposed_intents:
             return proposed_intents[0]
     raise AssertionError("fixture has no proposed intents")
+
+
+def first_trainable_node(document: dict[str, Any]) -> dict[str, Any]:
+    for node in document["graph"]["nodes"]:
+        if "trainable_model.lifecycle" in node.get("allowed_modules", []):
+            return node
+    raise AssertionError("fixture has no trainable lifecycle node")
+
+
+def assert_schema_invalid(
+    name: str,
+    validator: Any,
+    document: dict[str, Any],
+) -> None:
+    try:
+        validator.validate(document)
+    except Exception:
+        print(f"ok invalid {name}")
+        return
+    raise AssertionError(f"{name}: expected schema failure")
 
 
 def assert_invalid(

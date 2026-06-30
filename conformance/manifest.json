@@ -20,5 +20,27 @@
     "trainable_model.lifecycle appears only when the decision advertises the matching capability",
     "proposed intents cannot silently upgrade advisory or gated authority to direct",
     "direct authority is never the default authority for these fixtures"
+  ],
+  "invalid_cases": [
+    {
+      "name": "invalid_node_id",
+      "class": "schema"
+    },
+    {
+      "name": "derived_field_writable",
+      "class": "invariant"
+    },
+    {
+      "name": "unknown_edge_endpoint",
+      "class": "invariant"
+    },
+    {
+      "name": "trainable_lifecycle_without_capability",
+      "class": "invariant"
+    },
+    {
+      "name": "direct_authority_escalation",
+      "class": "invariant"
+    }
   ]
 }
