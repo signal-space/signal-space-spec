@@ -53,6 +53,12 @@ Each binding must reject:
 - authority transitions that silently upgrade advisory or gated intents to
   direct authority
 
+A proposed `SurfaceIntent` may use `direct` authority only when the containing
+decision, the target node's default authority, or the target node's per-intent
+authority map explicitly grants `direct`. Advisory decisions may still propose
+`gated` intents; the owning adapter remains responsible for applying or
+rejecting them at its boundary.
+
 ## Lazily Relationship
 
 The lazily dependency is the runtime contract for implementation repositories.
