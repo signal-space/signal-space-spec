@@ -1,0 +1,575 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signal-space.github.io/signal-space-spec/schemas/signal-space.schema.json",
+  "title": "Signal Space",
+  "description": "Shared graph, timeline, inspector, decision, and intent surface for live signal systems.",
+  "type": "object",
+  "required": ["schema_version", "graph"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "graph": {
+      "$ref": "#/$defs/SignalGraph"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "AuthorityLevel": {
+      "type": "string",
+      "enum": ["local", "advisory", "gated", "direct"]
+    },
+    "Authority": {
+      "type": "object",
+      "required": ["default"],
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/AuthorityLevel"
+        },
+        "by_intent": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/AuthorityLevel"
+          }
+        },
+        "owner": {
+          "type": "string"
+        },
+        "boundary": {
+          "type": "string",
+          "enum": ["view", "adapter", "runtime", "product", "external"]
+        },
+        "requires_approval": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "StateClass": {
+      "type": "string",
+      "enum": ["observation", "recommendation", "action"]
+    },
+    "StateField": {
+      "type": "object",
+      "required": ["id", "state_class", "writable"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "state_class": {
+          "$ref": "#/$defs/StateClass"
+        },
+        "writable": {
+          "type": "boolean"
+        },
+        "derived": {
+          "type": "boolean",
+          "default": false
+        },
+        "schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "SignalGraph": {
+      "type": "object",
+      "required": ["id", "nodes", "edges", "timeline", "intent_modules", "authority"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SignalNode"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SignalEdge"
+          }
+        },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TimelineEvent"
+          }
+        },
+        "inspectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InspectorPanel"
+          },
+          "default": []
+        },
+        "intent_modules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/IntentModule"
+          }
+        },
+        "allowed_intents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "authority": {
+          "$ref": "#/$defs/Authority"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/Snapshot"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SignalNode": {
+      "type": "object",
+      "required": ["id", "family", "state", "authority", "allowed_intents"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "family": {
+          "type": "string",
+          "enum": ["source", "transform", "memory", "decision", "gate", "output"]
+        },
+        "mode": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "input_schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "output_schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "authority": {
+          "$ref": "#/$defs/Authority"
+        },
+        "state": {
+          "type": "object",
+          "required": ["summary", "fields"],
+          "properties": {
+            "summary": {
+              "type": "string"
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/StateField"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "recent_events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SignalEvent"
+          },
+          "default": []
+        },
+        "explanation": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "decision": {
+          "$ref": "#/$defs/DecisionEnvelope"
+        },
+        "allowed_modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "allowed_intents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/JsonObject"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SignalEdge": {
+      "type": "object",
+      "required": ["id", "from", "to"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "from": {
+          "$ref": "#/$defs/Id"
+        },
+        "to": {
+          "$ref": "#/$defs/Id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "authority": {
+          "$ref": "#/$defs/Authority"
+        },
+        "state_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StateField"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "SignalEvent": {
+      "type": "object",
+      "required": ["id", "kind", "state_class", "created_at"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "state_class": {
+          "$ref": "#/$defs/StateClass"
+        },
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "TimelineEvent": {
+      "type": "object",
+      "required": ["id", "kind", "state_class", "created_at", "node_id"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "state_class": {
+          "$ref": "#/$defs/StateClass"
+        },
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "default": []
+        },
+        "node_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "edge_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "run_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "decision_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "additionalProperties": false
+    },
+    "InspectorPanel": {
+      "type": "object",
+      "required": ["id", "target", "sections"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "fields"],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Id"
+              },
+              "title": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/StateField"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DecisionEnvelope": {
+      "type": "object",
+      "required": ["id", "mode", "capabilities", "inputs", "output_schema", "authority"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["deterministic", "model", "small_agent", "large_agent"]
+        },
+        "artifact": {
+          "type": "string"
+        },
+        "feature_schema": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "output_schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "explanation": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "proposed_intents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SurfaceIntent"
+          },
+          "default": []
+        },
+        "authority": {
+          "$ref": "#/$defs/AuthorityLevel"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IntentSchema": {
+      "type": "object",
+      "required": ["type", "authority", "payload_schema"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "authority": {
+          "$ref": "#/$defs/AuthorityLevel"
+        },
+        "target_families": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "payload_schema": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IntentModule": {
+      "type": "object",
+      "required": ["id", "version", "intents"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string",
+          "enum": [
+            "navigation",
+            "layout",
+            "graph_editing",
+            "runtime",
+            "labeling",
+            "decision_inspection",
+            "trainable_model",
+            "inference_model",
+            "agent_lifecycle",
+            "approval",
+            "audit",
+            "product_adapter"
+          ]
+        },
+        "intents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/IntentSchema"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SurfaceIntent": {
+      "type": "object",
+      "required": ["id", "type", "target", "payload", "actor", "authority", "created_at"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "type": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "authority": {
+          "$ref": "#/$defs/AuthorityLevel"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "default": []
+        },
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "idempotency_key": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Target": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["graph", "node", "edge", "event", "timeline", "run", "decision", "inspector"]
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "required": ["id", "created_at", "read_only"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "delta_cursor": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
