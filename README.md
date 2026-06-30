@@ -31,3 +31,15 @@ schema version they target:
 Implementation repositories should declare the supported spec version and prove
 that these fixtures parse, validate, and round-trip without adding product-owned
 fields to the core schema.
+
+## Conformance Check
+
+Run the canonical schema and fixture invariant checks with:
+
+```bash
+make check
+```
+
+The check validates every required fixture against
+`schemas/signal-space.schema.json` and enforces the initial cross-fixture
+invariants from `conformance/manifest.json`.
