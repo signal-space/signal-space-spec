@@ -39,7 +39,7 @@ def main() -> int:
 
 
 def validate_invariants(name: str, document: dict[str, Any]) -> None:
-    if document["schema_version"] != "0.1.0":
+    if document["schema_version"] != "0.2.0":
         raise AssertionError(f"{name}: unsupported schema_version")
 
     graph = document["graph"]
@@ -73,6 +73,22 @@ def validate_invariants(name: str, document: dict[str, Any]) -> None:
                 raise AssertionError(
                     f"{name}: proposed intent silently upgrades to direct authority: {intent['id']}"
                 )
+        chart = node.get("state_chart")
+        if chart is not None:
+            states = set(chart["states"])
+            if chart["initial"] not in states:
+                raise AssertionError(
+                    f"{name}: state_chart initial not in states: {node['id']}"
+                )
+            if "current" in chart and chart["current"] not in states:
+                raise AssertionError(
+                    f"{name}: state_chart current not in states: {node['id']}"
+                )
+            for transition in chart["transitions"]:
+                if transition["from"] not in states or transition["to"] not in states:
+                    raise AssertionError(
+                        f"{name}: state_chart transition out of bounds: {node['id']}"
+                    )
 
     if graph["authority"]["default"] == "direct":
         raise AssertionError(f"{name}: fixture default authority must not be direct")
@@ -144,6 +160,33 @@ def validate_invalid_cases(validator: Any) -> None:
         document,
         "direct authority",
     )
+
+    document = json.loads(FIXTURES[1].read_text(encoding="utf-8"))
+    node = first_state_chart_node(document)
+    node["state_chart"]["current"] = "missing_state"
+    assert_invalid(
+        "state_chart_current_out_of_bounds",
+        validator,
+        document,
+        "state_chart current not in states",
+    )
+
+    document = json.loads(FIXTURES[1].read_text(encoding="utf-8"))
+    node = first_state_chart_node(document)
+    node["state_chart"]["transitions"][0]["to"] = "missing_state"
+    assert_invalid(
+        "state_chart_transition_out_of_bounds",
+        validator,
+        document,
+        "state_chart transition out of bounds",
+    )
+
+
+def first_state_chart_node(document: dict[str, Any]) -> dict[str, Any]:
+    for node in document["graph"]["nodes"]:
+        if node.get("state_chart") is not None:
+            return node
+    raise AssertionError("fixture has no state_chart node")
 
 
 def first_proposed_intent(document: dict[str, Any]) -> dict[str, Any]:

@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "schema": "../schemas/signal-space.schema.json",
   "fixtures": [
     {
@@ -19,7 +19,9 @@
     "derived state fields are not writable",
     "trainable_model.lifecycle appears only when the decision advertises the matching capability",
     "proposed intents cannot silently upgrade advisory or gated authority to direct",
-    "direct authority is never the default authority for these fixtures"
+    "direct authority is never the default authority for these fixtures",
+    "state_chart initial and current values are declared states",
+    "state_chart transitions only reference declared states"
   ],
   "invalid_cases": [
     {
@@ -40,6 +42,14 @@
     },
     {
       "name": "direct_authority_escalation",
+      "class": "invariant"
+    },
+    {
+      "name": "state_chart_current_out_of_bounds",
+      "class": "invariant"
+    },
+    {
+      "name": "state_chart_transition_out_of_bounds",
       "class": "invariant"
     }
   ]

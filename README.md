@@ -23,11 +23,19 @@ surface shape and validate every mutation through their own authority boundary.
 
 ## Current Version
 
-The initial schema version is `0.1.0`. Fixtures use stable names and declare the
+The current schema version is `0.2.0`. Fixtures use stable names and declare the
 schema version they target:
 
 - `agent_doc_supervisor.json`
 - `patchboard_attention_router.json`
+
+`0.2.0` adds an optional `state_chart` field on `SignalNode`. The chart mirrors
+lazily's `StateMachine<S, E>`: a list of `states`, an `initial` state, an
+optional `current` state, and `transitions` of `{from, event, to}`. Events
+conventionally match intent types so a `SurfaceIntent` doubles as a
+state-machine event; the owning adapter still decides whether to apply the
+transition at its authority boundary. Bindings that target `0.1.0` continue to
+validate documents that do not use `state_chart`.
 
 Implementation repositories should declare the supported spec version and prove
 that these fixtures parse, validate, and round-trip without adding product-owned

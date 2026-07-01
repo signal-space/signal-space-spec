@@ -32,6 +32,11 @@ and external effects. Signal Space can expose model candidates, labels,
 rollback metadata, and proposed agent actions, but the patchboard adapter keeps
 the gate policy and effect authority.
 
+A node MAY declare a `state_chart` (added in `0.2.0`) so inspectors can show
+valid transitions and so `SurfaceIntent`s can double as state-machine events.
+The chart only describes possible transitions; the patchboard adapter still owns
+whether to apply, queue, or reject each event at its authority boundary.
+
 ## MCP Boundary
 
 The MCP server is a control plane for inspection, schema discovery, validation,

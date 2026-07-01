@@ -219,6 +219,9 @@
             "type": "string"
           }
         },
+        "state_chart": {
+          "$ref": "#/$defs/StateChart"
+        },
         "provenance": {
           "$ref": "#/$defs/JsonObject"
         }
@@ -567,6 +570,48 @@
         },
         "delta_cursor": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "StateChart": {
+      "type": "object",
+      "description": "Declarative finite state machine mirroring lazily's StateMachine<S, E>. Declares possible states and event-driven transitions; the owning adapter remains responsible for applying or rejecting any transition at its authority boundary.",
+      "required": ["states", "initial", "transitions"],
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "initial": {
+          "type": "string"
+        },
+        "current": {
+          "type": "string",
+          "description": "Live state of the machine, mirroring lazily's state() getter. Optional; when absent the live state lives in state.fields as before."
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "event", "to"],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "event": {
+                "type": "string",
+                "description": "Event that triggers the transition. Conventionally matches an intent type advertised by the graph or the node's allowed_intents so a SurfaceIntent doubles as a state-machine event."
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

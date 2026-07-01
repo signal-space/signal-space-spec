@@ -9,14 +9,18 @@ Fixture names are stable API. A fixture may change only when its
 `schema_version` changes or when the change is backwards-compatible for every
 implementation that claims that version.
 
-Required fixtures for `0.1.0`:
+Required fixtures for `0.2.0`:
 
 - `agent_doc_supervisor.json`
 - `patchboard_attention_router.json`
 
+The `0.2.0` fixtures use the optional `state_chart` field on some nodes; the
+`agent_doc_supervisor` fixture remains `state_chart`-free to keep a minimal
+baseline for `0.1.0`-only consumers.
+
 ## Required Checks
 
-An implementation conforms to `0.1.0` when it can:
+An implementation conforms to `0.2.0` when it can:
 
 - parse every required fixture
 - validate node and edge ids
@@ -27,6 +31,8 @@ An implementation conforms to `0.1.0` when it can:
   inference or agent-only nodes
 - round-trip fixtures without losing graph, timeline, decision, authority, or
   intent envelope fields
+- when `state_chart` is present, ensure `initial`, `current`, and every
+  transition `from`/`to` reference declared states
 
 ## Version Semantics
 

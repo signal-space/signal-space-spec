@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "graph": {
     "id": "patchboard.attention_router",
     "name": "Patchboard attention router",
@@ -133,6 +133,19 @@
         },
         "allowed_modules": ["decision.inspect", "trainable_model.lifecycle", "labeling.feedback", "audit.export"],
         "allowed_intents": ["inspect_decision", "label_event", "replay_candidate", "start_candidate_shadow", "promote_candidate", "rollback_model"],
+        "state_chart": {
+          "states": ["idle", "evaluating", "shadow", "active", "rolled_back"],
+          "initial": "idle",
+          "current": "shadow",
+          "transitions": [
+            {"from": "idle", "event": "replay_candidate", "to": "evaluating"},
+            {"from": "evaluating", "event": "start_candidate_shadow", "to": "shadow"},
+            {"from": "shadow", "event": "promote_candidate", "to": "active"},
+            {"from": "active", "event": "rollback_model", "to": "rolled_back"},
+            {"from": "rolled_back", "event": "replay_candidate", "to": "evaluating"},
+            {"from": "shadow", "event": "rollback_model", "to": "rolled_back"}
+          ]
+        },
         "recent_events": [],
         "explanation": {
           "trainable": true
@@ -163,6 +176,18 @@
         },
         "allowed_modules": ["approval.gates"],
         "allowed_intents": ["approve_action", "reject_action", "hold_gate", "release_gate"],
+        "state_chart": {
+          "states": ["open", "held", "released", "rejected"],
+          "initial": "open",
+          "current": "held",
+          "transitions": [
+            {"from": "open", "event": "hold_gate", "to": "held"},
+            {"from": "held", "event": "release_gate", "to": "released"},
+            {"from": "held", "event": "reject_action", "to": "rejected"},
+            {"from": "released", "event": "hold_gate", "to": "held"},
+            {"from": "rejected", "event": "hold_gate", "to": "held"}
+          ]
+        },
         "recent_events": [],
         "explanation": {
           "policy": "explicit approval for external effects"
@@ -232,6 +257,20 @@
         },
         "allowed_modules": ["agent.lifecycle", "approval.gates"],
         "allowed_intents": ["inspect_agent_run", "pause_agent_run", "resume_agent_run", "cancel_agent_run", "approve_action"],
+        "state_chart": {
+          "states": ["idle", "running", "paused", "completed", "failed", "cancelled"],
+          "initial": "idle",
+          "current": "running",
+          "transitions": [
+            {"from": "idle", "event": "resume_agent_run", "to": "running"},
+            {"from": "running", "event": "pause_agent_run", "to": "paused"},
+            {"from": "paused", "event": "resume_agent_run", "to": "running"},
+            {"from": "running", "event": "cancel_agent_run", "to": "cancelled"},
+            {"from": "paused", "event": "cancel_agent_run", "to": "cancelled"},
+            {"from": "running", "event": "approve_action", "to": "completed"},
+            {"from": "running", "event": "reject_action", "to": "failed"}
+          ]
+        },
         "recent_events": [],
         "explanation": {
           "run_id": "run.patch-review.1"

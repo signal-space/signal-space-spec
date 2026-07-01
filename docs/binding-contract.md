@@ -1,7 +1,8 @@
 # Multi-Language Binding Contract
 
 This contract defines what each Signal Space implementation must provide for a
-given `signal-space-spec` version. The initial contract version is `0.1.0`.
+given `signal-space-spec` version. The initial contract version is `0.1.0`;
+`0.2.0` adds the optional `StateChart` surface described below.
 
 ## Required Repositories
 
@@ -35,9 +36,28 @@ Each binding must expose native representations for:
 - `IntentModule`
 - `DecisionEnvelope`
 - `Authority`
+- `StateChart` (added in `0.2.0`; optional on `SignalNode`)
 
 The native names may follow language conventions, but the serialized form must
 match `schemas/signal-space.schema.json`.
+
+## State Charts
+
+`0.2.0` introduces `StateChart` as an optional field on `SignalNode`. The shape
+mirrors lazily's reactive `StateMachine<S, E>`:
+
+- `states`: the enumeration of valid states (`S`)
+- `initial`: the entry state
+- `current`: optional live state (mirrors `StateMachine::state()`)
+- `transitions`: declarative form of the transition function
+  `Fn(&S, &E) -> Option<S>`, expressed as `{from, event, to}` triples
+
+Bindings SHOULD construct a lazily `StateMachine` (or the matching lazily-* type
+for the language) from a `StateChart` when a reactive runtime projection is
+requested. The `event` strings conventionally match intent types advertised by
+the graph so a `SurfaceIntent` doubles as a state-machine event; the binding
+MUST still route every transition through the owning adapter's authority
+boundary. Bindings that target only `0.1.0` MAY ignore the field.
 
 ## Validation Rules
 
