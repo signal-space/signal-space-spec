@@ -23,13 +23,34 @@ surface shape and validate every mutation through their own authority boundary.
 
 ## Current Version
 
-The current schema version is `0.2.0`. Fixtures use stable names and declare the
+The current schema version is `0.3.0`. Fixtures use stable names and declare the
 schema version they target:
 
-- `agent_doc_supervisor.json`
-- `patchboard_attention_router.json`
+- `agent_doc_supervisor.json` (stays at `0.2.0` as the backward-compatibility
+  baseline)
+- `patchboard_attention_router.json` (`0.3.0`)
+- `patchboard_io_rack.json` (`0.3.0`)
 
-`0.2.0` adds an optional `state_chart` field on `SignalNode`. The chart mirrors
+`0.3.0` adds three optional surfaces, all backward compatible with `0.2.0`:
+
+- **Typed ports** — `PortSpec` on `SignalNode`
+  (`{ id, name, direction: in|out, dtype, required }`) and edge
+  `from_port`/`to_port`. Edges that name their jacks are dtype-checked: the
+  `from` jack must be an output, the `to` jack an input, and the dtypes must
+  match. This is the "patch cable" contract the patchboard UI renders.
+- **Stream telemetry** — `StreamTelemetry` on `SignalEdge`
+  (`rate_hz`, `latency_ms`, `freshness_ms`, `last_value_preview`,
+  `distribution_hint`, `missing_data`). The live-cable readout, declared as
+  deterministic derived state (never a writable cell); connector failures
+  surface as `missing_data` / stale freshness.
+- **I/O bindings** — `IoBinding` on `SignalNode`
+  (`{ direction: ingress|egress, transport, endpoint, format, schema_ref,
+  auth_ref }`). Declares how a node binds to the outside world. Secrets are
+  never inlined — `auth_ref` names a host-resolved credential. Ingress bindings
+  are restricted to `source` nodes; egress bindings to `gate`/`output` nodes;
+  egress never carries `direct` authority.
+
+`0.2.0` added the optional `state_chart` field on `SignalNode`. The chart mirrors
 lazily's `StateMachine<S, E>`: a list of `states`, an `initial` state, an
 optional `current` state, and `transitions` of `{from, event, to}`. Events
 conventionally match intent types so a `SurfaceIntent` doubles as a

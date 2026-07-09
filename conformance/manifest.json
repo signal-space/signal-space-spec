@@ -1,16 +1,21 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "schema": "../schemas/signal-space.schema.json",
   "fixtures": [
     {
       "name": "agent_doc_supervisor",
       "path": "../fixtures/agent_doc_supervisor.json",
-      "description": "agent-doc read-only/advisory projection"
+      "description": "agent-doc read-only/advisory projection (0.2.0 backward-compatibility baseline; no ports/telemetry/io bindings)"
     },
     {
       "name": "patchboard_attention_router",
       "path": "../fixtures/patchboard_attention_router.json",
-      "description": "patchboard feature window, trainable model, gate, and small-agent projection"
+      "description": "patchboard feature window, trainable model, gate, and small-agent projection with typed ports, live cable telemetry, and one ingress + one egress webhook binding"
+    },
+    {
+      "name": "patchboard_io_rack",
+      "path": "../fixtures/patchboard_io_rack.json",
+      "description": "patchboard rack exercising every IoBinding transport (timer, stdin_jsonl, file_tail, webhook, websocket ingress; webhook, websocket, notify, exec, mcp egress)"
     }
   ],
   "invariants": [
@@ -21,7 +26,12 @@
     "proposed intents cannot silently upgrade advisory or gated authority to direct",
     "direct authority is never the default authority for these fixtures",
     "state_chart initial and current values are declared states",
-    "state_chart transitions only reference declared states"
+    "state_chart transitions only reference declared states",
+    "port ids are unique within a node",
+    "edges that name from_port/to_port resolve to existing jacks with matching dtypes (out -> in)",
+    "ingress io_bindings appear only on source nodes",
+    "egress io_bindings appear only on gate or output nodes",
+    "egress io_bindings never carry direct authority"
   ],
   "invalid_cases": [
     {
@@ -50,6 +60,26 @@
     },
     {
       "name": "state_chart_transition_out_of_bounds",
+      "class": "invariant"
+    },
+    {
+      "name": "ingress_binding_on_non_source",
+      "class": "invariant"
+    },
+    {
+      "name": "egress_binding_direct_authority",
+      "class": "invariant"
+    },
+    {
+      "name": "edge_port_dtype_mismatch",
+      "class": "invariant"
+    },
+    {
+      "name": "edge_from_port_not_found",
+      "class": "invariant"
+    },
+    {
+      "name": "duplicate_port_id",
       "class": "invariant"
     }
   ]

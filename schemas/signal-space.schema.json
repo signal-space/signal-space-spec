@@ -222,6 +222,16 @@
         "state_chart": {
           "$ref": "#/$defs/StateChart"
         },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PortSpec"
+          },
+          "default": []
+        },
+        "io_binding": {
+          "$ref": "#/$defs/IoBinding"
+        },
         "provenance": {
           "$ref": "#/$defs/JsonObject"
         }
@@ -256,6 +266,18 @@
             "$ref": "#/$defs/StateField"
           },
           "default": []
+        },
+        "from_port": {
+          "$ref": "#/$defs/Id",
+          "description": "Output jack on the `from` node this cable is plugged into. Optional; when absent the edge is an untyped connection (0.2.0 behavior)."
+        },
+        "to_port": {
+          "$ref": "#/$defs/Id",
+          "description": "Input jack on the `to` node this cable is plugged into."
+        },
+        "stream_telemetry": {
+          "$ref": "#/$defs/StreamTelemetry",
+          "description": "Live-cable readout (rate, latency, freshness, preview). Declared as deterministic derived state; hosts MUST NOT treat these as writable cells."
         }
       },
       "additionalProperties": false
@@ -612,6 +634,104 @@
             },
             "additionalProperties": false
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "PortDirection": {
+      "type": "string",
+      "enum": ["in", "out"]
+    },
+    "PortDtype": {
+      "type": "string",
+      "enum": ["scalar", "vector", "event", "window", "decision", "label"],
+      "description": "Jack type. Cables must connect compatible dtypes; a host SHOULD reject mismatched patches visibly."
+    },
+    "PortSpec": {
+      "type": "object",
+      "description": "A typed jack on a module. Added in 0.3.0. Edges may reference ports via from_port/to_port so the patchboard can dtype-check cables and render live telemetry per jack.",
+      "required": ["id", "direction", "dtype"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/PortDirection"
+        },
+        "dtype": {
+          "$ref": "#/$defs/PortDtype"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether an in-port must be connected for the node to be considered valid/wired."
+        }
+      },
+      "additionalProperties": false
+    },
+    "StreamTelemetry": {
+      "type": "object",
+      "description": "Live-cable readout for an edge. Added in 0.3.0. Always derived/observed state, never writable; connector failures surface here as missing_data / stale freshness.",
+      "properties": {
+        "rate_hz": {
+          "type": "number",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "freshness_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "last_value_preview": true,
+        "distribution_hint": true,
+        "missing_data": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "IoDirection": {
+      "type": "string",
+      "enum": ["ingress", "egress"]
+    },
+    "IoTransport": {
+      "type": "string",
+      "enum": ["webhook", "websocket", "file_tail", "timer", "stdin_jsonl", "exec", "notify", "mcp"],
+      "description": "How a source/output node binds to the outside world. Secrets are never inlined; auth_ref names a host-resolved credential."
+    },
+    "IoBinding": {
+      "type": "object",
+      "description": "Declares how a node binds to an external transport. Added in 0.3.0. ingress bindings are restricted to source nodes; egress bindings to gate/output nodes; egress must never carry direct authority.",
+      "required": ["direction", "transport"],
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/IoDirection"
+        },
+        "transport": {
+          "$ref": "#/$defs/IoTransport"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Transport address (URL, path, topic). Non-secret."
+        },
+        "format": {
+          "type": "string",
+          "description": "Wire format hint, e.g. json, jsonl, ndjson."
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Optional reference to the payload schema."
+        },
+        "auth_ref": {
+          "type": "string",
+          "description": "Name of a host-resolved credential. The document never carries the secret itself."
         }
       },
       "additionalProperties": false

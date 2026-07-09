@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "graph": {
     "id": "patchboard.attention_router",
     "name": "Patchboard attention router",
@@ -17,6 +17,21 @@
         "family": "source",
         "mode": "editor",
         "label": "Editor events",
+        "ports": [
+          {
+            "id": "events",
+            "name": "Editor events",
+            "direction": "out",
+            "dtype": "event"
+          }
+        ],
+        "io_binding": {
+          "direction": "ingress",
+          "transport": "webhook",
+          "endpoint": "/hooks/editor",
+          "format": "json",
+          "auth_ref": "editor_hook"
+        },
         "authority": {
           "default": "local",
           "boundary": "runtime",
@@ -46,6 +61,21 @@
         "family": "memory",
         "mode": "rolling_window",
         "label": "Route features",
+        "ports": [
+          {
+            "id": "events",
+            "name": "Events in",
+            "direction": "in",
+            "dtype": "event",
+            "required": true
+          },
+          {
+            "id": "features",
+            "name": "Feature window",
+            "direction": "out",
+            "dtype": "window"
+          }
+        ],
         "authority": {
           "default": "local",
           "boundary": "runtime",
@@ -75,6 +105,21 @@
         "family": "decision",
         "mode": "model",
         "label": "Route priority",
+        "ports": [
+          {
+            "id": "features",
+            "name": "Features in",
+            "direction": "in",
+            "dtype": "window",
+            "required": true
+          },
+          {
+            "id": "score",
+            "name": "Route score",
+            "direction": "out",
+            "dtype": "decision"
+          }
+        ],
         "authority": {
           "default": "advisory",
           "by_intent": {
@@ -156,6 +201,29 @@
         "family": "gate",
         "mode": "approval_required",
         "label": "Approval gate",
+        "ports": [
+          {
+            "id": "score",
+            "name": "Score in",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          },
+          {
+            "id": "release",
+            "name": "Release signal",
+            "direction": "out",
+            "dtype": "decision"
+          }
+        ],
+        "io_binding": {
+          "direction": "egress",
+          "transport": "webhook",
+          "endpoint": "https://hooks.example.com/route",
+          "format": "json",
+          "schema_ref": "route_release_v1",
+          "auth_ref": "route_hook"
+        },
         "authority": {
           "default": "gated",
           "boundary": "runtime",
@@ -198,6 +266,21 @@
         "family": "decision",
         "mode": "small_agent",
         "label": "Patch review agent",
+        "ports": [
+          {
+            "id": "context",
+            "name": "Context in",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          },
+          {
+            "id": "intent",
+            "name": "Proposed intent",
+            "direction": "out",
+            "dtype": "decision"
+          }
+        ],
         "authority": {
           "default": "advisory",
           "boundary": "runtime",
@@ -282,25 +365,74 @@
         "id": "edge.source.window",
         "from": "source.editor",
         "to": "window.route_features",
-        "label": "events"
+        "label": "events",
+        "from_port": "events",
+        "to_port": "events",
+        "stream_telemetry": {
+          "rate_hz": 0.1,
+          "latency_ms": 12,
+          "freshness_ms": 40,
+          "last_value_preview": {
+            "events_per_minute": 6
+          },
+          "missing_data": false
+        }
       },
       {
         "id": "edge.window.model",
         "from": "window.route_features",
         "to": "model.route_priority",
-        "label": "features"
+        "label": "features",
+        "from_port": "features",
+        "to_port": "features",
+        "stream_telemetry": {
+          "rate_hz": 0.2,
+          "latency_ms": 5,
+          "freshness_ms": 25,
+          "last_value_preview": {
+            "diff_size": 41
+          },
+          "missing_data": false
+        }
       },
       {
         "id": "edge.model.gate",
         "from": "model.route_priority",
         "to": "gate.approval",
-        "label": "route score"
+        "label": "route score",
+        "from_port": "score",
+        "to_port": "score",
+        "stream_telemetry": {
+          "rate_hz": 0.2,
+          "latency_ms": 8,
+          "freshness_ms": 30,
+          "last_value_preview": {
+            "priority_score": 0.88,
+            "route": "agent_review"
+          },
+          "distribution_hint": {
+            "mean": 0.81,
+            "p95": 0.92
+          },
+          "missing_data": false
+        }
       },
       {
         "id": "edge.gate.agent",
         "from": "gate.approval",
         "to": "agent.review_patch",
-        "label": "review request"
+        "label": "review request",
+        "from_port": "release",
+        "to_port": "context",
+        "stream_telemetry": {
+          "rate_hz": 0.05,
+          "latency_ms": 3,
+          "freshness_ms": 200,
+          "last_value_preview": {
+            "released": false
+          },
+          "missing_data": false
+        }
       }
     ],
     "timeline": [
