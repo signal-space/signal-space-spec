@@ -1,14 +1,14 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.3.0",
   "spec_repository": "https://github.com/signal-space/signal-space-spec",
   "bindings": [
     {
       "name": "signal-space-rs",
       "path": "../signal-space-rs",
       "metadata_file": "Cargo.toml",
-      "spec_version_pattern": "spec-version = \"0.1.0\"",
+      "spec_version_pattern": "spec-version = \"0.3.0\"",
       "lazily_dependency_patterns": [
-        "lazily = { git = \"https://github.com/lazily-hub/lazily-rs\""
+        "lazily = { version = \""
       ],
       "agent_doc_forbidden_patterns": [
         "agent-doc",
