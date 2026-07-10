@@ -1,0 +1,640 @@
+{
+  "schema_version": "0.3.0",
+  "graph": {
+    "id": "patchboard.supervisor",
+    "name": "Agent supervisor",
+    "source": "patchboard",
+    "nodes": [
+      {
+        "id": "source.repo_signals",
+        "family": "source",
+        "mode": "repo_signals",
+        "label": "Repo signals",
+        "authority": {
+          "default": "local",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": false
+        },
+        "state": {
+          "summary": "git / CI / agent-doc signal source",
+          "fields": [
+            {
+              "id": "signals.ci_failure_streak",
+              "state_class": "observation",
+              "writable": false,
+              "derived": true,
+              "value": 0
+            }
+          ]
+        },
+        "recent_events": [],
+        "explanation": {
+          "source": "repo observers"
+        },
+        "allowed_modules": [
+          "navigation.inspect"
+        ],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "ports": [
+          {
+            "id": "signals",
+            "name": "Repo signals",
+            "direction": "out",
+            "dtype": "event",
+            "required": false
+          }
+        ],
+        "io_binding": {
+          "direction": "ingress",
+          "transport": "file_tail",
+          "endpoint": ".agent-doc/signals.jsonl",
+          "format": "jsonl"
+        }
+      },
+      {
+        "id": "window.supervisor_features",
+        "family": "memory",
+        "mode": "rolling_window",
+        "label": "window.supervisor_features",
+        "authority": {
+          "default": "local",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": false
+        },
+        "state": {
+          "summary": "Supervisor feature window",
+          "fields": []
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "ports": [
+          {
+            "id": "signals",
+            "name": "Signals in",
+            "direction": "in",
+            "dtype": "event",
+            "required": true
+          },
+          {
+            "id": "features",
+            "name": "Feature window",
+            "direction": "out",
+            "dtype": "window",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "model.continuation",
+        "family": "decision",
+        "mode": "model",
+        "label": "model.continuation",
+        "authority": {
+          "default": "advisory",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": false
+        },
+        "state": {
+          "summary": "Continuation scorer (MLP)",
+          "fields": [
+            {
+              "id": "model.confidence",
+              "state_class": "observation",
+              "writable": false,
+              "derived": true,
+              "value": 0.0
+            }
+          ]
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "state_chart": {
+          "states": [
+            "idle",
+            "evaluating",
+            "shadow",
+            "active",
+            "rolled_back"
+          ],
+          "initial": "idle",
+          "current": "shadow",
+          "transitions": [
+            {
+              "from": "idle",
+              "event": "replay_candidate",
+              "to": "evaluating"
+            },
+            {
+              "from": "evaluating",
+              "event": "start_candidate_shadow",
+              "to": "shadow"
+            },
+            {
+              "from": "shadow",
+              "event": "promote_candidate",
+              "to": "active"
+            },
+            {
+              "from": "active",
+              "event": "rollback_model",
+              "to": "rolled_back"
+            },
+            {
+              "from": "rolled_back",
+              "event": "replay_candidate",
+              "to": "evaluating"
+            },
+            {
+              "from": "shadow",
+              "event": "rollback_model",
+              "to": "rolled_back"
+            }
+          ]
+        },
+        "ports": [
+          {
+            "id": "features",
+            "name": "Features in",
+            "direction": "in",
+            "dtype": "window",
+            "required": true
+          },
+          {
+            "id": "score",
+            "name": "Continuation score",
+            "direction": "out",
+            "dtype": "decision",
+            "required": false
+          }
+        ]
+      },
+      {
+        "id": "gate.supervisor",
+        "family": "gate",
+        "mode": "approval_required",
+        "label": "gate.supervisor",
+        "authority": {
+          "default": "gated",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": true
+        },
+        "state": {
+          "summary": "Supervisor gate",
+          "fields": [
+            {
+              "id": "gate.held",
+              "state_class": "action",
+              "writable": true,
+              "derived": false,
+              "value": true
+            }
+          ]
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "state_chart": {
+          "states": [
+            "open",
+            "held",
+            "released",
+            "rejected"
+          ],
+          "initial": "open",
+          "current": "held",
+          "transitions": [
+            {
+              "from": "open",
+              "event": "hold_gate",
+              "to": "held"
+            },
+            {
+              "from": "held",
+              "event": "release_gate",
+              "to": "released"
+            },
+            {
+              "from": "held",
+              "event": "reject_action",
+              "to": "rejected"
+            },
+            {
+              "from": "released",
+              "event": "hold_gate",
+              "to": "held"
+            },
+            {
+              "from": "rejected",
+              "event": "hold_gate",
+              "to": "held"
+            }
+          ]
+        },
+        "ports": [
+          {
+            "id": "score",
+            "name": "Score in",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          },
+          {
+            "id": "release",
+            "name": "Release signal",
+            "direction": "out",
+            "dtype": "decision",
+            "required": false
+          }
+        ],
+        "io_binding": {
+          "direction": "egress",
+          "transport": "notify",
+          "format": "json",
+          "auth_ref": "supervisor_hook"
+        }
+      },
+      {
+        "id": "output.wake_agent",
+        "family": "output",
+        "mode": "output",
+        "label": "output.wake_agent",
+        "authority": {
+          "default": "gated",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": true
+        },
+        "state": {
+          "summary": "Wake a stronger agent",
+          "fields": []
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "state_chart": {
+          "states": [
+            "idle",
+            "running",
+            "paused",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "initial": "idle",
+          "current": "running",
+          "transitions": [
+            {
+              "from": "idle",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "pause_agent_run",
+              "to": "paused"
+            },
+            {
+              "from": "paused",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "paused",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "running",
+              "event": "approve_action",
+              "to": "completed"
+            },
+            {
+              "from": "running",
+              "event": "reject_action",
+              "to": "failed"
+            }
+          ]
+        },
+        "ports": [
+          {
+            "id": "in",
+            "name": "In",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          }
+        ],
+        "io_binding": {
+          "direction": "egress",
+          "transport": "webhook",
+          "endpoint": "/hooks/wake_agent",
+          "format": "json",
+          "auth_ref": "supervisor_hook"
+        }
+      },
+      {
+        "id": "output.ask_human",
+        "family": "output",
+        "mode": "output",
+        "label": "output.ask_human",
+        "authority": {
+          "default": "gated",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": true
+        },
+        "state": {
+          "summary": "Escalate to a human",
+          "fields": []
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "state_chart": {
+          "states": [
+            "idle",
+            "running",
+            "paused",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "initial": "idle",
+          "current": "running",
+          "transitions": [
+            {
+              "from": "idle",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "pause_agent_run",
+              "to": "paused"
+            },
+            {
+              "from": "paused",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "paused",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "running",
+              "event": "approve_action",
+              "to": "completed"
+            },
+            {
+              "from": "running",
+              "event": "reject_action",
+              "to": "failed"
+            }
+          ]
+        },
+        "ports": [
+          {
+            "id": "in",
+            "name": "In",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          }
+        ],
+        "io_binding": {
+          "direction": "egress",
+          "transport": "webhook",
+          "endpoint": "/hooks/ask_human",
+          "format": "json",
+          "auth_ref": "supervisor_hook"
+        }
+      },
+      {
+        "id": "output.reroute_model",
+        "family": "output",
+        "mode": "output",
+        "label": "output.reroute_model",
+        "authority": {
+          "default": "gated",
+          "by_intent": {},
+          "owner": "patchboard",
+          "boundary": "runtime",
+          "requires_approval": true
+        },
+        "state": {
+          "summary": "Reroute to a stronger model",
+          "fields": []
+        },
+        "recent_events": [],
+        "explanation": {
+          "recipe": "supervisor"
+        },
+        "allowed_modules": [],
+        "allowed_intents": [
+          "open_inspector"
+        ],
+        "state_chart": {
+          "states": [
+            "idle",
+            "running",
+            "paused",
+            "completed",
+            "failed",
+            "cancelled"
+          ],
+          "initial": "idle",
+          "current": "running",
+          "transitions": [
+            {
+              "from": "idle",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "pause_agent_run",
+              "to": "paused"
+            },
+            {
+              "from": "paused",
+              "event": "resume_agent_run",
+              "to": "running"
+            },
+            {
+              "from": "running",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "paused",
+              "event": "cancel_agent_run",
+              "to": "cancelled"
+            },
+            {
+              "from": "running",
+              "event": "approve_action",
+              "to": "completed"
+            },
+            {
+              "from": "running",
+              "event": "reject_action",
+              "to": "failed"
+            }
+          ]
+        },
+        "ports": [
+          {
+            "id": "in",
+            "name": "In",
+            "direction": "in",
+            "dtype": "decision",
+            "required": true
+          }
+        ],
+        "io_binding": {
+          "direction": "egress",
+          "transport": "mcp",
+          "endpoint": "/hooks/reroute_model",
+          "format": "json",
+          "auth_ref": "supervisor_hook"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge.source.window",
+        "from": "source.repo_signals",
+        "to": "window.supervisor_features",
+        "label": "signals",
+        "state_fields": [],
+        "from_port": "signals",
+        "to_port": "signals",
+        "stream_telemetry": {
+          "rate_hz": 0.1,
+          "latency_ms": 5.0,
+          "freshness_ms": 30.0,
+          "last_value_preview": {},
+          "missing_data": false
+        }
+      },
+      {
+        "id": "edge.window.model",
+        "from": "window.supervisor_features",
+        "to": "model.continuation",
+        "label": "features",
+        "state_fields": [],
+        "from_port": "features",
+        "to_port": "features",
+        "stream_telemetry": {
+          "rate_hz": 0.1,
+          "latency_ms": 5.0,
+          "freshness_ms": 30.0,
+          "last_value_preview": {},
+          "missing_data": false
+        }
+      },
+      {
+        "id": "edge.model.gate",
+        "from": "model.continuation",
+        "to": "gate.supervisor",
+        "label": "score",
+        "state_fields": [],
+        "from_port": "score",
+        "to_port": "score",
+        "stream_telemetry": {
+          "rate_hz": 0.1,
+          "latency_ms": 5.0,
+          "freshness_ms": 30.0,
+          "last_value_preview": {},
+          "missing_data": false
+        }
+      }
+    ],
+    "timeline": [
+      {
+        "id": "timeline.supervisor.scored",
+        "kind": "model_scored",
+        "state_class": "recommendation",
+        "created_at": "2026-07-09T00:00:00Z",
+        "payload": {
+          "priority_score": 0.5,
+          "route": "continue"
+        },
+        "evidence": [],
+        "node_id": "model.continuation",
+        "decision_id": "decision.continuation"
+      }
+    ],
+    "inspectors": [],
+    "intent_modules": [],
+    "allowed_intents": [
+      "replay_candidate",
+      "promote_candidate",
+      "approve_action"
+    ],
+    "authority": {
+      "default": "gated",
+      "by_intent": {},
+      "owner": "patchboard",
+      "boundary": "runtime",
+      "requires_approval": true
+    },
+    "snapshot": {
+      "created_at": "2026-07-09T00:00:00Z",
+      "delta_cursor": "cursor-supervisor-1",
+      "id": "snapshot.supervisor.1",
+      "read_only": true
+    }
+  }
+}

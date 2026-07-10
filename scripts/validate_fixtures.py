@@ -16,6 +16,7 @@ FIXTURES = [
     ROOT / "fixtures" / "agent_doc_supervisor.json",
     ROOT / "fixtures" / "patchboard_attention_router.json",
     ROOT / "fixtures" / "patchboard_io_rack.json",
+    ROOT / "fixtures" / "patchboard_supervisor.json",
 ]
 
 SUPPORTED_VERSIONS = {"0.2.0", "0.3.0"}

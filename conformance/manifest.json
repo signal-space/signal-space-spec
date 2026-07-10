@@ -16,6 +16,11 @@
       "name": "patchboard_io_rack",
       "path": "../fixtures/patchboard_io_rack.json",
       "description": "patchboard rack exercising every IoBinding transport (timer, stdin_jsonl, file_tail, webhook, websocket ingress; webhook, websocket, notify, exec, mcp egress)"
+    },
+    {
+      "name": "patchboard_supervisor",
+      "path": "../fixtures/patchboard_supervisor.json",
+      "description": "agent-supervisor rack: repo/CI/test/agent-doc signals -> feature window -> continuation scorer (MLP) -> supervisor gate -> advisory wake-agent / ask-human / reroute egress bindings (never direct)"
     }
   ],
   "invariants": [
