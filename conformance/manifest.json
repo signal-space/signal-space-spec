@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "schema": "../schemas/signal-space.schema.json",
   "fixtures": [
     {
@@ -21,6 +21,21 @@
       "name": "patchboard_supervisor",
       "path": "../fixtures/patchboard_supervisor.json",
       "description": "agent-supervisor rack: repo/CI/test/agent-doc signals -> feature window -> continuation scorer (MLP) -> supervisor gate -> advisory wake-agent / ask-human / reroute egress bindings (never direct)"
+    },
+    {
+      "name": "patchboard_webhook_triage",
+      "path": "../fixtures/patchboard_webhook_triage.json",
+      "description": "n8n-style webhook triage workflow template (category=workflow_template): webhook ingress -> feature window -> MLP anomaly scorer -> approval gate -> small_agent triage -> webhook egress. Exercises agent + MLP + outside-service ingress/egress."
+    },
+    {
+      "name": "patchboard_scheduled_anomaly",
+      "path": "../fixtures/patchboard_scheduled_anomaly.json",
+      "description": "n8n-style scheduled anomaly workflow template (category=workflow_template): timer + file_tail ingress -> feature window -> MLP anomaly scorer -> approval gate -> large_agent responder -> desktop notify egress."
+    },
+    {
+      "name": "patchboard_event_fanout",
+      "path": "../fixtures/patchboard_event_fanout.json",
+      "description": "n8n-style event fan-out workflow template (category=workflow_template): websocket ingress -> feature window -> deterministic transform switch -> MLP router -> approval gate fanning out to webhook + exec + mcp egress."
     }
   ],
   "invariants": [

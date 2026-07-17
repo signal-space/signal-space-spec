@@ -17,9 +17,12 @@ FIXTURES = [
     ROOT / "fixtures" / "patchboard_attention_router.json",
     ROOT / "fixtures" / "patchboard_io_rack.json",
     ROOT / "fixtures" / "patchboard_supervisor.json",
+    ROOT / "fixtures" / "patchboard_webhook_triage.json",
+    ROOT / "fixtures" / "patchboard_scheduled_anomaly.json",
+    ROOT / "fixtures" / "patchboard_event_fanout.json",
 ]
 
-SUPPORTED_VERSIONS = {"0.2.0", "0.3.0"}
+SUPPORTED_VERSIONS = {"0.2.0", "0.3.0", "0.4.0"}
 EGRESS_FAMILIES = {"gate", "output"}
 
 

@@ -23,13 +23,28 @@ surface shape and validate every mutation through their own authority boundary.
 
 ## Current Version
 
-The current schema version is `0.3.0`. Fixtures use stable names and declare the
+The current schema version is `0.4.0`. Fixtures use stable names and declare the
 schema version they target:
 
 - `agent_doc_supervisor.json` (stays at `0.2.0` as the backward-compatibility
   baseline)
-- `patchboard_attention_router.json` (`0.3.0`)
-- `patchboard_io_rack.json` (`0.3.0`)
+- `patchboard_attention_router.json` (`0.4.0`)
+- `patchboard_io_rack.json` (`0.4.0`)
+- `patchboard_supervisor.json` (`0.4.0`)
+- `patchboard_webhook_triage.json` (`0.4.0`)
+- `patchboard_scheduled_anomaly.json` (`0.4.0`)
+- `patchboard_event_fanout.json` (`0.4.0`)
+
+`0.4.0` adds two optional graph-level fields, backward compatible with `0.3.0`:
+
+- **Template metadata** — `category` (string) and `tags` (array of strings) on
+  `SignalGraph`. Product adapters use `category` (conventionally
+  `"workflow_template"`) plus `tags` to catalog reusable n8n-style workflow
+  templates that wire ingress triggers, a learnable mixer, a deterministic gate,
+  an agent node, and egress actions. See
+  [`docs/workflow-templates.md`](docs/workflow-templates.md) for the concept map
+  between n8n nodes and Signal Space primitives. The fields are descriptive
+  catalog metadata only; they carry no authority and change no invariants.
 
 `0.3.0` adds three optional surfaces, all backward compatible with `0.2.0`:
 

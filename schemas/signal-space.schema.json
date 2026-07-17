@@ -147,6 +147,18 @@
         },
         "snapshot": {
           "$ref": "#/$defs/Snapshot"
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional catalog category for the graph (e.g. 'workflow_template'). Product adapters use it to group reusable, n8n-style workflow templates. Added in 0.4.0."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Optional free-form tags describing the graph's triggers, actions, and intent. Added in 0.4.0."
         }
       },
       "additionalProperties": false

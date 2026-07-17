@@ -1,12 +1,12 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "spec_repository": "https://github.com/signal-space/signal-space-spec",
   "bindings": [
     {
       "name": "signal-space-rs",
       "path": "../signal-space-rs",
       "metadata_file": "Cargo.toml",
-      "spec_version_pattern": "spec-version = \"0.3.0\"",
+      "spec_version_pattern": "spec-version = \"0.4.0\"",
       "lazily_dependency_patterns": [
         "lazily = { version = \""
       ],
@@ -19,9 +19,9 @@
       "name": "signal-space-js",
       "path": "../signal-space-js",
       "metadata_file": "package.json",
-      "spec_version_pattern": "\"specVersion\": \"0.1.0\"",
+      "spec_version_pattern": "\"specVersion\": \"0.4.0\"",
       "lazily_dependency_patterns": [
-        "\"@lazily-hub/js\""
+        "\"@lazily-hub/lazily-js\""
       ],
       "agent_doc_forbidden_patterns": [
         "agent-doc",
@@ -32,9 +32,9 @@
       "name": "signal-space-py",
       "path": "../signal-space-py",
       "metadata_file": "pyproject.toml",
-      "spec_version_pattern": "spec-version = \"0.1.0\"",
+      "spec_version_pattern": "spec-version = \"0.4.0\"",
       "lazily_dependency_patterns": [
-        "\"lazily>=0.11.0\""
+        "\"lazily>=0.31.2\""
       ],
       "agent_doc_forbidden_patterns": [
         "agent-doc",
@@ -45,7 +45,7 @@
       "name": "signal-space-zig",
       "path": "../signal-space-zig",
       "metadata_file": "build.zig.zon",
-      "spec_version_pattern": ".version = \"0.1.0\"",
+      "spec_version_pattern": ".version = \"0.4.0\"",
       "lazily_dependency_patterns": [
         ".lazily = .{",
         ".path = \"../lazily-zig\""
@@ -59,7 +59,7 @@
       "name": "signal-space-kt",
       "path": "../signal-space-kt",
       "metadata_file": "build.gradle.kts",
-      "spec_version_pattern": "signalSpaceSpecVersion\"] = \"0.1.0\"",
+      "spec_version_pattern": "signalSpaceSpecVersion\"] = \"0.4.0\"",
       "lazily_dependency_patterns": [
         "io.github.lazily:lazily-kt"
       ],
